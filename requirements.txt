@@ -1,6 +1,5 @@
 streamlit
 numpy
 opencv-python-headless
-torch
-torchvision
+google-generativeai
 pillow
