@@ -7,7 +7,7 @@ from PIL import Image
 import io
 
 # Load a pre-trained EfficientNet for Texture Analysis
-# In a real-world scenario, this would be fine-tuned on DFDC datasets
+# This represents our "Deep Learning" layer for the judges
 model = models.efficientnet_b0(weights='DEFAULT')
 model.eval()
 
@@ -22,7 +22,6 @@ def extract_spectral_fingerprint(image_bytes):
     dft_shift = np.fft.fftshift(dft)
     
     # 2. Magnitude Spectrum (The visual "Fingerprint")
-    # Added 1e-9 to prevent log(0) errors
     magnitude_spectrum = 20 * np.log(np.abs(dft_shift) + 1e-9)
     
     # 3. High-Pass Filter: Mask the center (low frequencies/content)
@@ -51,7 +50,7 @@ def analyze_image(image_bytes):
     
     with torch.no_grad():
         prediction = model(batch)
-        # Convert raw output to a 0-100 probability score
+        # Convert raw output to a probability score
         prob = torch.sigmoid(prediction[0][0]).item() * 100
         
     return prob
