@@ -1,6 +1,5 @@
-streamlit==1.56.0
-opencv-python-headless==4.13.0.92
-numpy==1.26.4
-google-genai==1.70.0
-python-dotenv==1.0.1
-Pillow==10.2.0
+streamlit
+numpy
+opencv-python-headless
+google-generativeai
+pillow
