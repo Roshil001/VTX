@@ -5,7 +5,7 @@ from forensics_engine import extract_spectral_fingerprint
 
 # --- API CONFIGURATION ---
 # It's safer to use st.secrets["GEMINI_KEY"] on GitHub
-GEMINI_KEY = st.secrets.get("GEMINI_KEY", "YOUR_API_KEY_HERE")
+GEMINI_KEY = st.secrets.get("GEMINI_KEY", "AIzaSyDFLh_sZSfyHijTczwR78NvkXvQhJRCJG4")
 genai.configure(api_key=GEMINI_KEY)
 
 # --- PAGE SETUP ---
