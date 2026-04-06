@@ -1,82 +1,84 @@
 import streamlit as st
 import numpy as np
+import re
 from forensics_engine import extract_spectral_fingerprint, analyze_image
 
-# Page Setup
-st.set_page_config(page_title="VTX Forensic Suite", page_icon="🛡️", layout="wide")
+# --- PAGE SETUP ---
+st.set_page_config(page_title="VTX Cyber-Suite", page_icon="🛡️", layout="wide")
 
-st.markdown("""
-    <style>
-    .reportview-container { background: #0e1117; }
-    .stProgress > div > div > div > div { background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); }
-    </style>
-    """, unsafe_allow_html=True)
+# --- MOCK COMPANY HISTORY DATA ---
+# In a real app, this would be a database/API call
+COMPANY_DB = {
+    "Google": {"domain": "google.com", "tone": "Professional", "last_contact": "2 days ago"},
+    "Microsoft": {"domain": "microsoft.com", "tone": "Technical", "last_contact": "1 week ago"},
+    "Jain University": {"domain": "jainuniversity.ac.in", "tone": "Academic", "last_contact": "5 hours ago"}
+}
 
-# Sidebar
+# --- SIDEBAR NAVIGATION ---
 with st.sidebar:
-    st.title("🛡️ VTX Engine")
-    st.write("Deepfake Detection via Frequency Fingerprinting")
+    st.title("🛡️ VTX Cyber-Suite")
+    mode = st.radio("Select Security Module:", ["Deepfake Detector", "Email Fraud Analysis"])
     st.divider()
-    st.caption("Hackathon Build v1.2")
+    st.caption("Developed for Jain University Hackathon 2026")
 
-st.title("🔍 Digital Forensic Analysis")
-st.write("Upload suspicious media to extract mathematical sensor signatures.")
+# --- MODULE 1: DEEPFAKE DETECTOR ---
+if mode == "Deepfake Detector":
+    st.title("🔍 Deepfake Fingerprint Forensic")
+    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
 
-uploaded_file = st.file_uploader("Upload Evidence (JPG/PNG)", type=["jpg", "png", "jpeg"])
-
-if uploaded_file:
-    file_bytes = uploaded_file.read()
-    
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Original Image")
-        st.image(file_bytes, use_container_width=True)
-
-    with col2:
-        st.subheader("Frequency Artifact Map")
-        noise_map, spectrum = extract_spectral_fingerprint(file_bytes)
+    if uploaded_file:
+        file_bytes = uploaded_file.read()
+        col1, col2 = st.columns(2)
+        with col1:
+            st.image(file_bytes, caption="Evidence", use_container_width=True)
+        with col2:
+            noise, spectrum = extract_spectral_fingerprint(file_bytes)
+            max_val = np.max(spectrum)
+            st.image(spectrum / (max_val if max_val > 0 else 1), caption="FFT Spectrum", use_container_width=True)
         
-        # Safe Normalization for Display
-        max_val = np.max(spectrum)
-        if max_val > 0:
-            st.image(spectrum / max_val, use_container_width=True, clamp=True)
-            st.caption("Grids/Dots indicate periodic upsampling artifacts (AI Signature).")
+        # Final Verdict Logic
+        prob = analyze_image(file_bytes)
+        st.divider()
+        if prob > 70:
+            st.error(f"### Verdict: DEEPFAKE ({prob:.1f}%)")
         else:
-            st.error("Spectral analysis failed.")
+            st.success(f"### Verdict: AUTHENTIC ({100-prob:.1f}%)")
 
-    # --- VERDICT SECTION ---
-    st.divider()
-    st.subheader("🏁 Final AI Forensic Verdict")
-    
-    model_score = analyze_image(file_bytes)
-    fft_anomaly = np.mean(noise_map)
-    
-    # Hybrid Scoring: Combines FFT Math with Neural Net Pattern Matching
-    final_score = (fft_anomaly * 1.5) + (model_score * 0.7)
-    final_score = min(99.9, max(0.5, final_score)) # Clamp values
+# --- MODULE 2: EMAIL FRAUD ANALYSIS ---
+elif mode == "Email Fraud Analysis":
+    st.title("📧 Corporate Email Forensic (CEV)")
+    st.write("Analyse emails against corporate history to detect spoofing and phishing.")
 
-    v_col1, v_col2 = st.columns([1, 2])
+    col_input, col_hist = st.columns([2, 1])
 
-    with v_col1:
-        if final_score > 75:
-            st.error(f"## {final_score:.1f}% Prob. Synthetic")
-            st.markdown("### 🚩 **VERDICT: DEEPFAKE**")
-        elif final_score > 45:
-            st.warning(f"## {final_score:.1f}% Prob. Synthetic")
-            st.markdown("### ⚠️ **VERDICT: SUSPICIOUS**")
+    with col_hist:
+        st.subheader("📜 Known Company History")
+        st.json(COMPANY_DB)
+
+    with col_input:
+        company_name = st.selectbox("Select Company to Validate Against:", list(COMPANY_DB.keys()))
+        sender_email = st.text_input("Sender Email Address (e.g., hr@google.com)")
+        email_body = st.text_area("Paste Email Content Here:", height=200)
+
+    if st.button("Analyse Email Security"):
+        if sender_email and email_body:
+            # 1. Domain Check
+            expected_domain = COMPANY_DB[company_name]["domain"]
+            is_domain_valid = sender_email.endswith(f"@{expected_domain}")
+
+            # 2. Urgency/Fraud Detection (NLP Lite)
+            fraud_keywords = ["urgent", "immediately", "bank details", "suspended", "password", "transfer"]
+            detected_keywords = [word for word in fraud_keywords if word in email_body.lower()]
+            
+            # 3. Final Scoring
+            st.divider()
+            if not is_domain_valid:
+                st.error("🚩 CRITICAL: DOMAIN SPOOFING DETECTED")
+                st.write(f"The sender's domain does not match {company_name}'s official record.")
+            elif len(detected_keywords) > 2:
+                st.warning("⚠️ SUSPICIOUS: HIGH-URGENCY PHISHING PATTERNS")
+                st.write(f"Detected suspicious keywords: {', '.join(detected_keywords)}")
+            else:
+                st.success("✅ VERIFIED: EMAIL MATCHES CORPORATE PROFILE")
         else:
-            st.success(f"## {final_score:.1f}% Prob. Synthetic")
-            st.markdown("### ✅ **VERDICT: AUTHENTIC**")
-
-    with v_col2:
-        st.info("**Analysis Summary:**")
-        if final_score > 75:
-            st.write("Structural anomalies detected in high-frequency bands. Pixel interpolation matches known generative AI kernels (StyleGAN/Diffusion).")
-        else:
-            st.write("Noise distribution aligns with physical CMOS sensor patterns. No periodic upsampling artifacts detected.")
-
-    st.button("📄 Export Forensic PDF Report")
-
-else:
-    st.info("Please upload an image to begin forensic reconstruction.")
+            st.info("Please enter sender email and body text.")
